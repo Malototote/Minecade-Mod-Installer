@@ -99,9 +99,10 @@ public class ModInstaller {
                 // we're installing camstudio, we need to download it first however. It doesn't come packaged.
                 File camstudio = new File(temp, "camstudio" + version + ".zip");
                 if (!camstudio.exists()) {
+                    System.out.println(camstudio + " not found, downloading now.");
                     // so we don't have to download it multiple times, let's use the cached version
                     Frame.getInstance().download();
-                    FileUtils.copyURLToFile(new URL("http://paulbgd.me/storage/modinstaller/CamStudio_" + version + ".zip"), camstudio  );
+                    FileUtils.copyURLToFile(new URL("http://paulbgd.me/storage/modinstaller/CamStudio_" + version + ".zip"), camstudio);
                     Frame.getInstance().update();
                 }
                 extract(camstudio, source);
