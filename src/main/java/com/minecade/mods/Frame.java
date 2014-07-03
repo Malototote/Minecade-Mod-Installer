@@ -27,6 +27,7 @@ public class Frame extends JFrame implements ActionListener {
     private static Frame instance;
     JPanel buttons;
     Font font;
+    final BufferedImage finalMyImage;
 
     public Frame() {
         super("Minecade Mod Installer");
@@ -103,7 +104,7 @@ public class Frame extends JFrame implements ActionListener {
         buttons.setBackground(new Color(0, 255, 0, 0));
 
         final JComboBox<String> options = new JComboBox<String>(new String[]{"Minecade Mod", "Minecade Mod + Optifine", "Minecade Mod + Optifine + Camstudio"});
-        final BufferedImage finalMyImage = myImage;
+        finalMyImage = myImage;
         options.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -145,17 +146,35 @@ public class Frame extends JFrame implements ActionListener {
                     }
                 }
             }.start();
-            buttons.removeAll();
-            JLabel installing = new JLabel();
-            try {
-                installing.setIcon(new ImageIcon(ImageIO.read(this.getClass().getClassLoader().getResourceAsStream("installing.png"))));
-            } catch (IOException e1) {
-                e1.printStackTrace();
-                installing.setText("Installing...");
-            }
-            buttons.add(installing);
-            this.pack();
+            update();
         }
     }
 
+    public void update() {
+        buttons.removeAll();
+        JLabel installing = new JLabel();
+        try {
+            installing.setIcon(new ImageIcon(ImageIO.read(this.getClass().getClassLoader().getResourceAsStream("installing.png"))));
+        } catch (IOException e1) {
+            e1.printStackTrace();
+            installing.setText("Installing...");
+        }
+        buttons.add(installing);
+        this.pack();
+        ((JLabel) Frame.this.getContentPane()).setIcon(new ImageIcon(finalMyImage));
+}
+
+    public void download() {
+        buttons.removeAll();
+        JLabel installing = new JLabel();
+        try {
+            installing.setIcon(new ImageIcon(ImageIO.read(this.getClass().getClassLoader().getResourceAsStream("downloading.png"))));
+        } catch (IOException e1) {
+            e1.printStackTrace();
+            installing.setText("Downloading...");
+        }
+        buttons.add(installing);
+        this.pack();
+        ((JLabel) Frame.this.getContentPane()).setIcon(new ImageIcon(finalMyImage));
+    }
 }

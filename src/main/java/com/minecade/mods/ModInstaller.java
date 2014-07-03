@@ -1,6 +1,5 @@
 package com.minecade.mods;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -8,12 +7,16 @@ import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.jar.JarEntry;
-import java.util.jar.JarOutputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.util.Arrays;
+import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import javax.swing.JOptionPane;
 import javax.swing.UIManager;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -74,20 +77,43 @@ public class ModInstaller {
                 JOptionPane.showMessageDialog(Frame.getInstance(), "Failed to create Minecade Mod folder!", "Error", JOptionPane.ERROR_MESSAGE);
                 System.exit(0);
                 return;
-            } else if(temp.exists()) {
-                for(File file : temp.listFiles()) {
+            } else if (temp.exists()) {
+                for (File file : temp.listFiles()) {
                     file.delete();
                 }
             }
-            IOUtils.copy(ModInstaller.class.getClassLoader().getResourceAsStream("minecademod-" + version + ".zip"), new FileOutputStream(new File(temp, "temp.zip")));
-            extract(new File(temp, "temp.zip"), minecadeFolder);
+            File source = new File(temp, "sources");
+            // let's load our json file first
+            IOUtils.copy(ModInstaller.class.getClassLoader().getResourceAsStream("MinecadeMod-" + version + ".json"), new FileOutputStream(new File(minecadeFolder, "MinecadeMod-1.7.2.json")));
+            // now, let's load our Minecade Mod files
+            IOUtils.copy(ModInstaller.class.getClassLoader().getResourceAsStream("MinecadeMod_" + version + ".zip"), new FileOutputStream(new File(temp, "minecademod.zip")));
+            extract(new File(temp, "minecademod.zip"), source);
 
             File jar = new File(minecadeFolder, "MinecadeMod-" + version + ".jar");
+            if (installation.toLowerCase().contains("optifine")) {
+                // we're installing optifine, let's add it to our source pool
+                IOUtils.copy(ModInstaller.class.getClassLoader().getResourceAsStream("Optifine_" + version + ".zip"), new FileOutputStream(new File(temp, "optifine.zip")));
+                extract(new File(temp, "optifine.zip"), source);
+            }
             if (installation.toLowerCase().contains("camstudio")) {
-                IOUtils.copy(ModInstaller.class.getClassLoader().getResourceAsStream("CamStudio_" + version + ".jar"), new FileOutputStream(jar));
-            } else if (installation.toLowerCase().contains("optifine")) {
-                // we're installing the optifine mod, let's use that jar instead
-                IOUtils.copy(ModInstaller.class.getClassLoader().getResourceAsStream("Optifine_" + version + ".jar"), new FileOutputStream(jar));
+                // we're installing camstudio, we need to download it first however. It doesn't come packaged.
+                File camstudio = new File(temp, "camstudio" + version + ".zip");
+                if (!camstudio.exists()) {
+                    // so we don't have to download it multiple times, let's use the cached version
+                    Frame.getInstance().download();
+                    FileUtils.copyURLToFile(new URL("http://paulbgd.me/storage/modinstaller/CamStudio_" + version + ".zip"), camstudio  );
+                    Frame.getInstance().update();
+                }
+                extract(camstudio, source);
+            }
+
+            try {
+                Packager.packZip(jar, Arrays.asList(source.listFiles()));
+            } catch (IOException exception) {
+                exception.printStackTrace();
+                JOptionPane.showMessageDialog(Frame.getInstance(), "Failed to pack!", "Error", JOptionPane.ERROR_MESSAGE);
+                System.exit(0);
+                return;
             }
 
             // now for adding the profile
@@ -108,7 +134,7 @@ public class ModInstaller {
             bw.write(object.toJSONString());
             bw.close();
 
-            JOptionPane.showMessageDialog(Frame.getInstance(), "You have finished installing the Minecade Mod for version " + version + "!", "Installed!", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(Frame.getInstance(), "You have finished installing the " + installation + " for version " + version + "!", "Installed!", JOptionPane.INFORMATION_MESSAGE);
             System.exit(0);
         } catch (Exception e) {
             System.exit(0);
@@ -119,45 +145,13 @@ public class ModInstaller {
         }
     }
 
-    private static void addToJar(File source, JarOutputStream target) throws IOException {
-        BufferedInputStream in = null;
-        try {
-            if (source.isDirectory()) {
-                String name = source.getPath().replace("\\", "/");
-                if (!name.isEmpty()) {
-                    if (!name.endsWith("/"))
-                        name += "/";
-                    JarEntry entry = new JarEntry(name);
-                    entry.setTime(source.lastModified());
-                    target.putNextEntry(entry);
-                    target.closeEntry();
-                }
-                for (File nestedFile : source.listFiles())
-                    addToJar(nestedFile, target);
-                return;
+    private static void addToList(File directory, List<File> files) {
+        for (File file : directory.listFiles()) {
+            if (file.isDirectory()) {
+                addToList(file, files);
+            } else {
+                files.add(file);
             }
-
-            String name = source.getPath().replace("\\", "/");
-            if(name.substring(0, 1).charAt(0) == '/') {
-                name = name.substring(1, name.length());
-            }
-            JarEntry entry = new JarEntry(name);
-            entry.setTime(source.lastModified());
-            target.putNextEntry(entry);
-            in = new BufferedInputStream(new FileInputStream(source));
-
-            byte[] buffer = new byte[1024];
-            while (true) {
-                int count = in.read(buffer);
-                if (count == -1)
-                    break;
-                target.write(buffer, 0, count);
-            }
-            System.out.println("Added " + entry.getName() + " to jar");
-            target.closeEntry();
-        } finally {
-            if (in != null)
-                in.close();
         }
     }
 
@@ -184,11 +178,11 @@ public class ModInstaller {
                 File newFile = new File(destinationFolder, entryName);
                 int n;
                 FileOutputStream fileoutputstream;
-                if(newFile.getParent() != null && !newFile.getParentFile().exists()) {
+                if (newFile.getParent() != null && !newFile.getParentFile().exists()) {
                     newFile.getParentFile().mkdirs();
                 }
 
-                if(zipentry.isDirectory()) {
+                if (zipentry.isDirectory()) {
                     newFile.mkdir();
                     zipentry = zipinputstream.getNextEntry();
                     continue;
@@ -211,12 +205,69 @@ public class ModInstaller {
         }
     }
 
+    public static void addFilesToExistingZip(File zipFile, File[] files) throws IOException {
+        // get a temp file
+        File tempFile = File.createTempFile(zipFile.getName(), null);
+        // delete it, otherwise you cannot rename your existing zip to it.
+        tempFile.delete();
+
+        boolean renameOk = zipFile.renameTo(tempFile);
+        if (!renameOk) {
+            throw new RuntimeException("could not rename the file " + zipFile.getAbsolutePath() + " to " + tempFile.getAbsolutePath());
+        }
+        byte[] buf = new byte[1024];
+
+        ZipInputStream zin = new ZipInputStream(new FileInputStream(tempFile));
+        ZipOutputStream out = new ZipOutputStream(new FileOutputStream(zipFile));
+
+        ZipEntry entry = zin.getNextEntry();
+        while (entry != null) {
+            String name = entry.getName();
+            boolean notInFiles = true;
+            for (File f : files) {
+                if (f.getName().equals(name)) {
+                    notInFiles = false;
+                    break;
+                }
+            }
+            if (notInFiles) {
+                // Add ZIP entry to output stream.
+                out.putNextEntry(new ZipEntry(name));
+                // Transfer bytes from the ZIP file to the output file
+                int len;
+                while ((len = zin.read(buf)) > 0) {
+                    out.write(buf, 0, len);
+                }
+            }
+            entry = zin.getNextEntry();
+        }
+        // Close the streams
+        zin.close();
+        // Compress the files
+        for (int i = 0; i < files.length; i++) {
+            InputStream in = new FileInputStream(files[i]);
+            // Add ZIP entry to output stream.
+            out.putNextEntry(new ZipEntry(files[i].getName()));
+            // Transfer bytes from the file to the ZIP file
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            // Complete the entry
+            out.closeEntry();
+            in.close();
+        }
+        // Complete the ZIP file
+        out.close();
+        tempFile.delete();
+    }
+
     public static boolean isWindows() {
-        return (OS.indexOf("win") >= 0);
+        return OS.contains("win");
     }
 
     public static boolean isMac() {
-        return (OS.indexOf("mac") >= 0);
+        return OS.contains("mac");
     }
 
 }
