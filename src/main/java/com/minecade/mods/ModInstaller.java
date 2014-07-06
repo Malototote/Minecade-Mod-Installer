@@ -22,8 +22,8 @@ public class ModInstaller {
 
     private static final String OS = System.getProperty("os.name").toLowerCase();
     public final static String version = "1.7.2";
-    public final static String stage = "Release";
-    public static String installation = "Minecade Mod";
+    public final static String stage = "Beta";
+    public static String installation = "OlimpoCraft Mod";
 
     public static void main(String[] args) {
         System.out.println("Loading Mod Installer for version " + version);
@@ -55,14 +55,14 @@ public class ModInstaller {
         System.out.println("Found Minecraft Folder: " + minecraftFolder.getAbsolutePath());
         File versionFolder = new File(minecraftFolder, "versions");
         File profiles = new File(minecraftFolder, "launcher_profiles.json");
-        File minecadeFolder = new File(versionFolder, "MinecadeMod-" + version);
+        File minecadeFolder = new File(versionFolder, "OlimpoMod-" + version);
         if (!profiles.exists()) {
-            JOptionPane.showMessageDialog(Frame.getInstance(), "You need to play Minecraft first!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(Frame.getInstance(), "Necesitas jugar Minecraft primero!", "Error", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
             return;
         }
         if (!minecadeFolder.exists() && !minecadeFolder.mkdir()) {
-            JOptionPane.showMessageDialog(Frame.getInstance(), "Failed to create Minecade folder!", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(Frame.getInstance(), "No se pudo crear la carpeta Minecade!", "Excepción", JOptionPane.ERROR_MESSAGE);
             System.exit(0);
             return;
         }
@@ -71,7 +71,7 @@ public class ModInstaller {
         try {
             File temp = new File(System.getenv("APPDATA"), "MinecadeModInstaller");
             if (!temp.exists() && !temp.mkdir()) {
-                JOptionPane.showMessageDialog(Frame.getInstance(), "Failed to create Minecade Mod folder!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(Frame.getInstance(), "No se pudo crear la carpeta Minecade!", "Excepción", JOptionPane.ERROR_MESSAGE);
                 System.exit(0);
                 return;
             } else if (temp.exists()) {
@@ -81,12 +81,12 @@ public class ModInstaller {
             }
             File source = new File(temp, "sources");
             // let's load our json file first
-            IOUtils.copy(ModInstaller.class.getClassLoader().getResourceAsStream("MinecadeMod-" + version + ".json"), new FileOutputStream(new File(minecadeFolder, "MinecadeMod-1.7.2.json")));
+            IOUtils.copy(ModInstaller.class.getClassLoader().getResourceAsStream("OlimpoMod-" + version + ".json"), new FileOutputStream(new File(minecadeFolder, "OlimpoMod-1.7.2.json")));
             // now, let's load our Minecade Mod files
-            IOUtils.copy(ModInstaller.class.getClassLoader().getResourceAsStream("MinecadeMod_" + version + ".zip"), new FileOutputStream(new File(temp, "minecademod.zip")));
-            extract(new File(temp, "minecademod.zip"), source);
+            IOUtils.copy(ModInstaller.class.getClassLoader().getResourceAsStream("OlimpoMod_" + version + ".zip"), new FileOutputStream(new File(temp, "olimpomod.zip")));
+            extract(new File(temp, "olimpomod.zip"), source);
 
-            File jar = new File(minecadeFolder, "MinecadeMod-" + version + ".jar");
+            File jar = new File(minecadeFolder, "OlimpoMod-" + version + ".jar");
             if (installation.toLowerCase().contains("optifine")) {
                 // we're installing optifine, let's add it to our source pool
                 IOUtils.copy(ModInstaller.class.getClassLoader().getResourceAsStream("Optifine_" + version + ".zip"), new FileOutputStream(new File(temp, "optifine.zip")));
@@ -109,7 +109,7 @@ public class ModInstaller {
                 Packager.packZip(jar, Arrays.asList(source.listFiles()));
             } catch (IOException exception) {
                 exception.printStackTrace();
-                JOptionPane.showMessageDialog(Frame.getInstance(), "Failed to pack!", "Error", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(Frame.getInstance(), "Error al empacar!", "Excepción", JOptionPane.ERROR_MESSAGE);
                 System.exit(0);
                 return;
             }
@@ -121,9 +121,9 @@ public class ModInstaller {
             JSONObject profileObject = (JSONObject) object.get("profiles");
 
             JSONObject minecadeMod = new JSONObject();
-            minecadeMod.put("name", "MinecadeMod-" + version);
-            minecadeMod.put("lastVersionId", "MinecadeMod-" + version);
-            profileObject.put("MinecadeMod-" + version, minecadeMod);
+            minecadeMod.put("name", "OlimpoMod-" + version);
+            minecadeMod.put("lastVersionId", "OlimpoMod-" + version);
+            profileObject.put("OlimpoMod-" + version, minecadeMod);
             object.put("profiles", profileObject);
 
             System.out.println(object.toJSONString());
@@ -132,13 +132,13 @@ public class ModInstaller {
             bw.write(object.toJSONString());
             bw.close();
 
-            JOptionPane.showMessageDialog(Frame.getInstance(), "You have finished installing the " + installation + " for version " + version + "!", "Installed!", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(Frame.getInstance(), "Ha terminado de instalar el " + installation + " de la versión " + version + "!", "Installed!", JOptionPane.INFORMATION_MESSAGE);
             System.exit(0);
         } catch (Exception e) {
-            System.exit(0);
+            JOptionPane.showMessageDialog(Frame.getInstance(), e.getMessage(), "Excepción", JOptionPane.ERROR_MESSAGE);
             minecadeFolder.deleteOnExit();
-            JOptionPane.showMessageDialog(Frame.getInstance(), e.getMessage(), "Exception", JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
+            System.exit(0);
             return;
         }
     }

@@ -30,7 +30,7 @@ public class Frame extends JFrame implements ActionListener {
     final BufferedImage finalMyImage;
 
     public Frame() {
-        super("Minecade Mod Installer");
+        super("OlimpoCraft Mod Instalador");
 
         this.setSize(350, 240);
         this.setUndecorated(true);
@@ -52,7 +52,7 @@ public class Frame extends JFrame implements ActionListener {
         panel.setIcon(new ImageIcon(myImage));
         panel.setLayout(new BorderLayout());
 
-        final JLabel stage = new JLabel(String.format("Stage: %s | MC Version: %s | OS: %s | Creator: %s", ModInstaller.stage, ModInstaller.version, ModInstaller.getOS(), "PaulBGD.me"), SwingConstants.CENTER);
+        final JLabel stage = new JLabel(String.format("Etapa: %s | MC Versión: %s | OS: %s | Creador: %s", ModInstaller.stage, ModInstaller.version, ModInstaller.getOS(), "PaulBGD.me"), SwingConstants.CENTER);
         stage.setForeground(new Color(54, 54, 54));
         stage.addMouseListener(new MouseListener() {
             @Override
@@ -94,16 +94,16 @@ public class Frame extends JFrame implements ActionListener {
         title.setBorder(new LineBorder(new Color(0, 255, 0, 0), 10));
 
         buttons = new JPanel();
-        JButton install = new JButton("Install Mod");
+        JButton install = new JButton("Instalar Mod");
         install.addActionListener(this);
         font = new Font(install.getFont().getName(), 0, 20);
         install.setFont(font);
-        JButton close = new JButton("Close");
+        JButton close = new JButton("Cerca");
         close.addActionListener(this);
         close.setFont(font);
         buttons.setBackground(new Color(0, 255, 0, 0));
 
-        final JComboBox<String> options = new JComboBox<String>(new String[]{"Minecade Mod", "Minecade Mod + Optifine", "Minecade Mod + Optifine + Camstudio"});
+        final JComboBox<String> options = new JComboBox<String>(new String[]{"OlimpoCraft Mod", "OlimpoCraft Mod + Optifine", "OlimpoCraft + Optifine + Camstudio"});
         finalMyImage = myImage;
         options.addActionListener(new ActionListener() {
             @Override
@@ -132,16 +132,16 @@ public class Frame extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         String s = e.getActionCommand();
-        if (s.equals("Close")) {
+        if (s.equals("Cerca")) {
             System.exit(0);
-        } else if (s.equals("Install Mod")) {
+        } else if (s.equals("Instalar Mod")) {
             new Thread() {
                 @Override
                 public void run() {
                     try {
                         ModInstaller.install();
                     } catch (IOException e1) {
-                        JOptionPane.showMessageDialog(Frame.getInstance(), "IOException!", "Exception", JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(Frame.getInstance(), "IOException!", "Excepción", JOptionPane.ERROR_MESSAGE);
                         System.exit(0);
                     }
                 }
