@@ -98,7 +98,7 @@ public class Frame extends JFrame implements ActionListener {
         install.addActionListener(this);
         font = new Font(install.getFont().getName(), 0, 20);
         install.setFont(font);
-        JButton close = new JButton("Cerca");
+        JButton close = new JButton("Cerrar");
         close.addActionListener(this);
         close.setFont(font);
         buttons.setBackground(new Color(0, 255, 0, 0));
@@ -132,7 +132,7 @@ public class Frame extends JFrame implements ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         String s = e.getActionCommand();
-        if (s.equals("Cerca")) {
+        if (s.equals("Cerrar")) {
             System.exit(0);
         } else if (s.equals("Instalar Mod")) {
             new Thread() {
